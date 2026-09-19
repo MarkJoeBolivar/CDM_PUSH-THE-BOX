@@ -231,10 +231,10 @@ module tt_um_AbAdA_2048 (
   wire [3:0] b_y = t_y + d_y; // Behind Target Y
 
   wire t_is_wall;
-  level_map m_t(.level(current_level), .x(t_x), .y(t_y), .is_wall(t_is_wall));
+  level_map m_t(.level(current_level), .x(t_x), .y(t_y), .is_wall(t_is_wall), .is_goal());
 
   wire b_is_wall;
-  level_map m_b(.level(current_level), .x(b_x), .y(b_y), .is_wall(b_is_wall));
+  level_map m_b(.level(current_level), .x(b_x), .y(b_y), .is_wall(b_is_wall), .is_goal());
 
   wire t_has_box0 = b0_active && (t_x == b0_x && t_y == b0_y);
   wire t_has_box1 = b1_active && (t_x == b1_x && t_y == b1_y);
@@ -247,9 +247,9 @@ module tt_um_AbAdA_2048 (
   wire b_has_any_box = b_has_box0 | b_has_box1 | b_has_box2;
 
   wire b0_on_goal, b1_on_goal, b2_on_goal;
-  level_map m_b0_check(.level(current_level), .x(b0_x), .y(b0_y), .is_goal(b0_on_goal));
-  level_map m_b1_check(.level(current_level), .x(b1_x), .y(b1_y), .is_goal(b1_on_goal));
-  level_map m_b2_check(.level(current_level), .x(b2_x), .y(b2_y), .is_goal(b2_on_goal));
+  level_map m_b0_check(.level(current_level), .x(b0_x), .y(b0_y), .is_wall(), .is_goal(b0_on_goal));
+  level_map m_b1_check(.level(current_level), .x(b1_x), .y(b1_y), .is_wall(), .is_goal(b1_on_goal));
+  level_map m_b2_check(.level(current_level), .x(b2_x), .y(b2_y), .is_wall(), .is_goal(b2_on_goal));
 
   wire win_condition = (!b0_active || b0_on_goal) && 
                        (!b1_active || b1_on_goal) && 
@@ -316,7 +316,7 @@ module tt_um_AbAdA_2048 (
   reg       r_pipe_in_grid;
 
   always @(posedge clk) begin
-    r_grid_x       <= pix_x - 10'd64;
+    r_grid_x <= pix_x[8:0] - 9'd64;
     r_grid_y       <= pix_y[8:0] - 9'd48;
     r_pipe_in_grid <= (pix_x >= 10'd64 && pix_x < 10'd576) && 
                       (pix_y >= 10'd48 && pix_y < 10'd432);
