@@ -18,11 +18,16 @@ module tt_um_AbAdA_2048 (
   // --------------------------------------------------------------------------
   // RESET SYNCHRONIZER
   // --------------------------------------------------------------------------
-  reg rst_sync_0 = 1'b1;
-  reg rst_sync_1 = 1'b1;
+  reg rst_sync_0;
+  reg rst_sync_1;
   always @(posedge clk) begin
-    rst_sync_0 <= ~rst_n;
-    rst_sync_1 <= rst_sync_0;
+    if (!rst_n) begin
+      rst_sync_0 <= 1'b1;
+      rst_sync_1 <= 1'b1;
+    end else begin
+      rst_sync_0 <= 1'b0;
+      rst_sync_1 <= rst_sync_0;
+    end
   end
   wire sys_rst = rst_sync_1;
 
@@ -93,6 +98,8 @@ module tt_um_AbAdA_2048 (
 
   wire raw_up, raw_down, raw_left, raw_right, raw_start;
   wire _unused_buttons;
+  wire _unused_y, _unused_select;
+  wire _unused_a, _unused_x, _unused_l, _unused_r, _unused_is_present;
 
   gamepad_pmod_single driver (
       .rst_n      (~sys_rst),
@@ -101,9 +108,10 @@ module tt_um_AbAdA_2048 (
       .pmod_clk   (ui_in[5]),
       .pmod_latch (ui_in[4]),
       .b          (_unused_buttons),
-      .y(), .select(), .start(raw_start),
+      .y(_unused_y), .select(_unused_select), .start(raw_start),
       .up(raw_up), .down(raw_down), .left(raw_left), .right(raw_right),
-      .a(), .x(), .l(), .r(), .is_present()
+      .a(_unused_a), .x(_unused_x), .l(_unused_l), .r(_unused_r),
+      .is_present(_unused_is_present)
   );
 
   // --------------------------------------------------------------------------
@@ -222,11 +230,11 @@ module tt_um_AbAdA_2048 (
   wire [3:0] b_x = t_x + d_x; // Behind Target X (for pushing)
   wire [3:0] b_y = t_y + d_y; // Behind Target Y
 
-  wire t_is_wall, t_is_goal;
-  level_map m_t(.level(current_level), .x(t_x), .y(t_y), .is_wall(t_is_wall), .is_goal(t_is_goal));
+  wire t_is_wall;
+  level_map m_t(.level(current_level), .x(t_x), .y(t_y), .is_wall(t_is_wall));
 
-  wire b_is_wall, b_is_goal;
-  level_map m_b(.level(current_level), .x(b_x), .y(b_y), .is_wall(b_is_wall), .is_goal(b_is_goal));
+  wire b_is_wall;
+  level_map m_b(.level(current_level), .x(b_x), .y(b_y), .is_wall(b_is_wall));
 
   wire t_has_box0 = b0_active && (t_x == b0_x && t_y == b0_y);
   wire t_has_box1 = b1_active && (t_x == b1_x && t_y == b1_y);
@@ -239,9 +247,9 @@ module tt_um_AbAdA_2048 (
   wire b_has_any_box = b_has_box0 | b_has_box1 | b_has_box2;
 
   wire b0_on_goal, b1_on_goal, b2_on_goal;
-  level_map m_b0_check(.level(current_level), .x(b0_x), .y(b0_y), .is_wall(), .is_goal(b0_on_goal));
-  level_map m_b1_check(.level(current_level), .x(b1_x), .y(b1_y), .is_wall(), .is_goal(b1_on_goal));
-  level_map m_b2_check(.level(current_level), .x(b2_x), .y(b2_y), .is_wall(), .is_goal(b2_on_goal));
+  level_map m_b0_check(.level(current_level), .x(b0_x), .y(b0_y), .is_goal(b0_on_goal));
+  level_map m_b1_check(.level(current_level), .x(b1_x), .y(b1_y), .is_goal(b1_on_goal));
+  level_map m_b2_check(.level(current_level), .x(b2_x), .y(b2_y), .is_goal(b2_on_goal));
 
   wire win_condition = (!b0_active || b0_on_goal) && 
                        (!b1_active || b1_on_goal) && 
@@ -303,7 +311,7 @@ module tt_um_AbAdA_2048 (
   // --------------------------------------------------------------------------
   // VGA PIPELINE (16x12 Grid -> 512x384 Pixels centered)
   // --------------------------------------------------------------------------
-  reg [9:0] r_grid_x;
+  reg [8:0] r_grid_x;
   reg [8:0] r_grid_y;
   reg       r_pipe_in_grid;
 
@@ -471,6 +479,8 @@ module level_map (
               if (x == 8 && (y == 3 || y == 5 || y == 6 || y == 8)) is_wall = 1;
               if (x == 11 && y >= 4 && y <= 6) is_goal = 1;
           end
-      endcase
+          default: begin
+              // Base border remains active; no interior walls or goals.
+          end
   end
 endmodule
