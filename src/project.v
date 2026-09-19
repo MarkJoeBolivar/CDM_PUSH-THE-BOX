@@ -479,8 +479,9 @@ module level_map (
               if (x == 8 && (y == 3 || y == 5 || y == 6 || y == 8)) is_wall = 1;
               if (x == 11 && y >= 4 && y <= 6) is_goal = 1;
           end
-          default: begin
-              // Base border remains active; no interior walls or goals.
-          end
-  end
+         default: begin
+    // Base border remains active; no interior walls or goals.
+end
+endcase
+end
 endmodule
